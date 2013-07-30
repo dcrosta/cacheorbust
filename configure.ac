@@ -3,7 +3,7 @@ AC_INIT([cacheorbust], [1.0.0], [dcrosta@late.am])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 AC_PROG_CXX
-AM_PROG_AR
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 LT_INIT([shared disable-static pic-only dlopen])
 AC_ENABLE_SHARED
