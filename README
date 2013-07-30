@@ -1,0 +1,54 @@
+# About
+
+CacheOrBust is a special-purpose cache for HTTP requests. Requests for pages
+which are not yet cached immediately return an empty response, and enqueue a
+request to be made to the upstream HTTP server in the background. When the
+background request completes, the response body is cached.
+
+Requests to CacheOrBust are made using a modified subset of the memcached
+protocol. Most memcached client libraries should work with CacheOrBust with
+little or no modification.
+
+To request a page from the cache, issue a memcached `get` command with the
+full URL of the page to be cached as the key. It may be necessary to
+configure your memcached client library with a larger maximum key length
+than normal, as some URLs can be quite long.
+
+
+# Install
+
+CacheOrBust uses autotools, which can be installed through your
+distribution's package manager, and depends on libraries and headers from
+Kyoto Cabinet and Kyoto Tycoon, which can be found at http://fallabs.com/.
+
+With dependencies installed, you can configure the build environment with:
+
+    $ autoreconf
+    $ ./configure
+
+And then build the CacheOrBust shared object library with:
+
+    $ make
+    $ [sudo] make install
+
+
+# Run
+
+CacheOrBust is built as a "pluggable server" for Kyoto Tycoon. The full path
+to ktcacheorbust.so should be given to the `-plsv` option to `ktserver`:
+
+    $ ktserver -plsv /usr/local/lib/ktcacheorbust-1.0.so
+
+CacheOrBust understands several options which can be set using the `-plex`
+option to `ktserver`:
+
+* `host`: sets the hostname for the listening socket [default: localhost]
+* `port`: sets the port number for the listening socket [default: 6080]
+* `server_threads`: number of threads to handle memcached requests [default: 16]
+* `fetcher_threads`: number of threads to handle background HTTP fetches [default: 16]
+* `ttl`: number of seconds for which cached results are served before re-fetching
+  from the upstream server [default: 3600]
+
+A good starting point is:
+
+    $ ktserver -plsv /usr/local/lib/ktcacheorbust-1.0.so -plex "port=1234#ttl=43200"
