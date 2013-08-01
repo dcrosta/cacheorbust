@@ -44,9 +44,9 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
 
   if (!_db->set(rawurl, record.str(), ttl)) {
     _db->remove(rawurl);
-    delete task;
-    return;
   }
+
+  delete task;
 }
 
 kt::HTTPClient* FetchQueue::get_client(kt::URL& url)
