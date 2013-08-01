@@ -111,6 +111,8 @@ bool CacheOrBust::Worker::process(kt::ThreadedServer* serv, kt::ThreadedServer::
       success = do_stats(serv, sess, tokens, db);
     } else if (cmd == "flush_all") {
       success = do_flush(serv, sess, tokens, db);
+    } else if (cmd == "quit") {
+      success = false;
     } else {
       // TODO: client error?
       sess->printf("ERROR\r\n");
