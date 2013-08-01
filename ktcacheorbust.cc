@@ -140,23 +140,16 @@ bool CacheOrBust::Worker::do_get(
     const std::vector<std::string>& tokens, kt::TimedDB* db)
 {
   uint32_t tid = sess->thread_id();
-  std::string url;
   int32_t ttl = _serv->_ttl;
 
-  std::vector<std::string>::const_iterator it = tokens.begin();
-  std::vector<std::string>::const_iterator itend = tokens.end();
+  if (tokens.size() < 2)
+    return sess->printf("CLIENT_ERROR missing URL\r\n");
+  if (tokens.size() > 3)
+    return sess->printf("CLIENT_ERROR extra data after TTL\r\n");
 
-  // skip "get"
-  ++it;
-
-  if (it == itend) return sess->printf("CLIENT_ERROR missing URL\r\n");
-  url = it++->data();
-
-  if (it != itend) {
-    ttl = kc::atoi(it++->data());
-  }
-
-  if (it != itend) return sess->printf("CLIENT_ERROR extra data after TTL\r\n");
+  std::string url(tokens[1]);
+  if (tokens.size() == 3)
+    ttl = kc::atoi(tokens[2].c_str());
 
   size_t datasize;
   char* data = db->get(url.data(), url.size(), &datasize);
