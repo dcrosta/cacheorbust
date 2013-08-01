@@ -189,7 +189,9 @@ bool CacheOrBust::Worker::do_flush(
     kt::ThreadedServer* serv, kt::ThreadedServer::Session* sess,
     const std::vector<std::string>& tokens, kt::TimedDB* db)
 {
-  return false;
+  db->clear();
+  sess->printf("OK\r\n");
+  return true;
 }
 
 bool CacheOrBust::Worker::do_stats(
