@@ -114,10 +114,10 @@ bool CacheOrBust::Worker::process(kt::ThreadedServer* serv, kt::ThreadedServer::
     } else if (cmd == "quit") {
       success = false;
     } else {
-      // TODO: client error?
       sess->printf("ERROR\r\n");
       serv->log(kt::ThreadedServer::Logger::ERROR, "(%s): invalid command '%s'",
           sess->expression().c_str(), cmd.c_str());
+      success = true;
     }
   }
 
