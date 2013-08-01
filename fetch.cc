@@ -16,6 +16,7 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
     msg << "illegal URL '" << rawurl << "'";
     _serv->log(kt::ThreadedServer::Logger::INFO, msg.str());
     _db->remove(rawurl);
+    _serv->count_op(FETCH_FAIL);
     delete task;
     return;
   }
@@ -33,6 +34,7 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
     _serv->log(kt::ThreadedServer::Logger::ERROR, msg.str());
     _db->remove(rawurl);
     return_client(url, client, false);
+    _serv->count_op(FETCH_FAIL);
     delete task;
     return;
   }
@@ -46,6 +48,7 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
     _db->remove(rawurl);
   }
 
+  _serv->count_op(FETCH);
   delete task;
 }
 

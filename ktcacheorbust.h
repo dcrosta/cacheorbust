@@ -10,6 +10,18 @@ namespace kc = kyotocabinet;
 namespace kt = kyototycoon;
 
 namespace cob {
+  typedef enum {
+    HIT,
+    MISS,
+    ENQUEUE,
+    FLUSH,
+    FETCH,
+    FETCH_FAIL,
+    LAST_OP_
+  } Op;
+
+  typedef uint64_t OpCounts[LAST_OP_];
+
   class CacheOrBust : public kt::PluggableServer {
     private:
       class Worker;
@@ -31,6 +43,8 @@ namespace cob {
       uint32_t _fetcher_threads;
       uint32_t _ttl;
 
+      OpCounts _opcounts;
+
     public:
       explicit CacheOrBust() :
           _stime(kc::time()),
@@ -42,8 +56,13 @@ namespace cob {
           _server_threads(0),
           _fetcher_threads(0),
           _ttl(0),
-          _serv()
-      {};
+          _serv(),
+          _opcounts()
+      {
+        for (int32_t j = 0; j < LAST_OP_; j++) {
+          _opcounts[j] = 0;
+        }
+      };
 
       void configure(kt::TimedDB* dbary, size_t dbnum,
           kt::ThreadedServer::Logger* logger, uint32_t logkinds,
@@ -64,19 +83,10 @@ namespace cob {
         _serv.log(kind, message.c_str());
       }
 
+      void count_op(Op op);
+
     private:
       class Worker : public kt::ThreadedServer::Worker {
-        // opcounters
-        enum {
-          HIT,
-          MISS,
-          ENQUEUE,
-          FETCH,
-          FLUSH,
-          LAST_OP_
-        };
-        typedef uint64_t OpCounts[LAST_OP_];
-
         private:
         // borrowed
         CacheOrBust* _serv;

@@ -213,7 +213,7 @@ bool CacheOrBust::Worker::do_stats(
 
   OpCounts ops;
   for (int32_t j = 0; j < LAST_OP_; j++) {
-    ops[j] = 0;
+    ops[j] = _serv->_opcounts[j];
   }
   for (int32_t i = 0; i < _nthreads; i++) {
     for (int32_t j = 0; j < LAST_OP_; j++) {
@@ -221,6 +221,7 @@ bool CacheOrBust::Worker::do_stats(
     }
   }
 
+  kc::strprintf(&result, "STAT flush %lld\r\n", ops[FLUSH]);
   kc::strprintf(&result, "STAT hit %lld\r\n", ops[HIT]);
   kc::strprintf(&result, "STAT miss %lld\r\n", ops[MISS]);
   if (ops[HIT] || ops[MISS])
@@ -228,12 +229,17 @@ bool CacheOrBust::Worker::do_stats(
   else
     kc::strprintf(&result, "STAT hit_rate 0.0\r\n");
   kc::strprintf(&result, "STAT enqueue %lld\r\n", ops[ENQUEUE]);
-  kc::strprintf(&result, "STAT fetch %lld\r\n", ops[FETCH]);
-  kc::strprintf(&result, "STAT flush %lld\r\n", ops[FLUSH]);
   kc::strprintf(&result, "STAT queue_size %lld\r\n", _serv->_queue->count());
-  kc::strprintf(&result, "END\r\n");
+  kc::strprintf(&result, "STAT fetch %lld\r\n", ops[FETCH]);
+  kc::strprintf(&result, "STAT fetch_failed %lld\r\n", ops[FETCH_FAIL]);
 
+  kc::strprintf(&result, "END\r\n");
   return !!(sess->send(result.data(), result.size()));
+}
+
+void CacheOrBust::count_op(Op op)
+{
+  _opcounts[op]++;
 }
 
 
