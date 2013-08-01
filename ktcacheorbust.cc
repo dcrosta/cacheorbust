@@ -223,6 +223,10 @@ bool CacheOrBust::Worker::do_stats(
 
   kc::strprintf(&result, "STAT hit %lld\r\n", ops[HIT]);
   kc::strprintf(&result, "STAT miss %lld\r\n", ops[MISS]);
+  if (ops[HIT] || ops[MISS])
+    kc::strprintf(&result, "STAT hit_rate %f\r\n", (float)ops[HIT] / (ops[MISS] + ops[HIT]));
+  else
+    kc::strprintf(&result, "STAT hit_rate 0.0\r\n");
   kc::strprintf(&result, "STAT enqueue %lld\r\n", ops[ENQUEUE]);
   kc::strprintf(&result, "STAT fetch %lld\r\n", ops[FETCH]);
   kc::strprintf(&result, "STAT flush %lld\r\n", ops[FLUSH]);
