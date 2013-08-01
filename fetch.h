@@ -40,7 +40,7 @@ namespace cob {
       void do_task(kc::TaskQueue::Task* task);
 
       kt::HTTPClient* get_client(kt::URL& url);
-      void return_client(kt::URL& url, kt::HTTPClient* client);
+      void return_client(kt::URL& url, kt::HTTPClient* client, bool keep=true);
   };
 
   class FetchTask : public kc::TaskQueue::Task {

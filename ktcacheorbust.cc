@@ -173,7 +173,10 @@ bool CacheOrBust::Worker::do_get(
     // cache miss in 30s will cause another background
     // fetch to be enqueued
     std::string value(1, FLAG_PENDING);
-    db->set(url.data(), url.size(), value.c_str(), 1, 30);
+    if (!db->set(url, value, 30)) {
+      sess->printf("SERVER_ERROR could not set sentinel\r\n");
+      return true;
+    }
 
     FetchTask* fetch = new FetchTask(url, ttl);
     _serv->_queue->add_task(fetch);

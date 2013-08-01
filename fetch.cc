@@ -11,19 +11,42 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
   int32_t ttl(task->_ttl);
 
   kt::URL url(rawurl);
-  _serv->log(kt::ThreadedServer::Logger::DEBUG, "fetching '%s'", rawurl.c_str());
+  if (url.host().empty() || 0 == url.port()) {
+    std::stringstream msg;
+    msg << "illegal URL '" << rawurl << "'";
+    _serv->log(kt::ThreadedServer::Logger::INFO, msg.str());
+    _db->remove(rawurl);
+    delete task;
+    return;
+  }
+
+  std::stringstream msg;
+  msg << "fetching '" << rawurl << "'";
+  _serv->log(kt::ThreadedServer::Logger::DEBUG, msg.str());
 
   std::string response;
   kt::HTTPClient* client(get_client(url));
   client->open(url.host(), url.port(), 5);
-  client->fetch(url.path_query(), kt::HTTPClient::MGET, &response);
+  if (-1 == client->fetch(url.path_query(), kt::HTTPClient::MGET, &response)) {
+    std::stringstream msg;
+    msg << "failed to fetch URL '" << rawurl << "': " << response;
+    _serv->log(kt::ThreadedServer::Logger::ERROR, msg.str());
+    _db->remove(rawurl);
+    return_client(url, client, false);
+    delete task;
+    return;
+  }
   return_client(url, client);
 
   std::stringstream record;
   record << '\0';
   record << response;
 
-  _db->set(rawurl.c_str(), rawurl.size(), record.str().c_str(), response.size() + 1, ttl);
+  if (!_db->set(rawurl, record.str(), ttl)) {
+    _db->remove(rawurl);
+    delete task;
+    return;
+  }
 }
 
 kt::HTTPClient* FetchQueue::get_client(kt::URL& url)
@@ -75,7 +98,7 @@ kt::HTTPClient* FetchQueue::get_client(kt::URL& url)
   return client;
 }
 
-void FetchQueue::return_client(kt::URL& url, kt::HTTPClient* client)
+void FetchQueue::return_client(kt::URL& url, kt::HTTPClient* client, bool keep)
 {
   kc::ScopedMutex lk(&_lock);
 
@@ -88,8 +111,13 @@ void FetchQueue::return_client(kt::URL& url, kt::HTTPClient* client)
   while (iters.first != iters.second) {
     entry& elem(iters.first->second);
     if (elem.first == client) {
-      elem.second = false;
-      return;
+      if (keep) {
+        elem.second = false;
+        return;
+      } else {
+        _clients.erase(iters.first);
+        return;
+      }
     }
     ++iters.first;
   }

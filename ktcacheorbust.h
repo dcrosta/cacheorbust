@@ -59,6 +59,11 @@ namespace cob {
         _serv.log(kind, format, ap);
       }
 
+      void log(kt::ThreadedServer::Logger::Kind kind, std::string message)
+      {
+        _serv.log(kind, message.c_str());
+      }
+
     private:
       class Worker : public kt::ThreadedServer::Worker {
         // opcounters
