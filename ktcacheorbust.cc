@@ -127,13 +127,12 @@ bool CacheOrBust::Worker::process(kt::ThreadedServer* serv, kt::ThreadedServer::
 /* Handle a GET request.
  *
  * GET requests are formed like:
- *    GET http://www.example.com/... [TTL]
  *
- * If the URL is already cached, return it immediately.
+ *    get key url [TTL]
  *
- * Otherwise immediately return an empty string, and enqueue
- * a request to cache the URL. If set, store the result for TTL
- * seconds, or the default TTL (1 hour).
+ * If a record for `key` exists, return it immediately. Otherwise
+ * enqueue a request for `url`, and store the response body in `key`
+ * for `TTL` seconds.
  */
 bool CacheOrBust::Worker::do_get(
     kt::ThreadedServer* serv, kt::ThreadedServer::Session* sess,
@@ -143,16 +142,19 @@ bool CacheOrBust::Worker::do_get(
   int32_t ttl = _serv->_ttl;
 
   if (tokens.size() < 2)
+    return sess->printf("CLIENT_ERROR missing key\r\n");
+  if (tokens.size() < 3)
     return sess->printf("CLIENT_ERROR missing URL\r\n");
-  if (tokens.size() > 3)
+  if (tokens.size() > 4)
     return sess->printf("CLIENT_ERROR extra data after TTL\r\n");
 
-  std::string url(tokens[1]);
-  if (tokens.size() == 3)
-    ttl = kc::atoi(tokens[2].c_str());
+  std::string key(tokens[1]);
+  std::string url(tokens[2]);
+  if (tokens.size() == 4)
+    ttl = kc::atoi(tokens[3].c_str());
 
   size_t datasize;
-  char* data = db->get(url.data(), url.size(), &datasize);
+  char* data = db->get(key.data(), key.size(), &datasize);
   if (data) {
     const char flags = data[0];
     if (flags & FLAG_PENDING) {
@@ -173,12 +175,12 @@ bool CacheOrBust::Worker::do_get(
     // cache miss in 30s will cause another background
     // fetch to be enqueued
     std::string value(1, FLAG_PENDING);
-    if (!db->set(url, value, 30)) {
+    if (!db->set(key, value, 30)) {
       sess->printf("SERVER_ERROR could not set sentinel\r\n");
       return true;
     }
 
-    FetchTask* fetch = new FetchTask(url, ttl);
+    FetchTask* fetch = new FetchTask(key, url, ttl);
     _serv->_queue->add_task(fetch);
     _opcounts[tid][ENQUEUE]++;
   }

@@ -47,11 +47,13 @@ namespace cob {
     friend class FetchQueue;
 
     private:
+      std::string _key;
       std::string _url;
       int32_t _ttl;
 
     public:
-      FetchTask(std::string& url, int32_t ttl) :
+      FetchTask(std::string& key, std::string& url, int32_t ttl) :
+        _key(key),
         _url(url),
         _ttl(ttl)
       { };
