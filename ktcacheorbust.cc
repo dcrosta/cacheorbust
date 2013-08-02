@@ -189,6 +189,8 @@ bool CacheOrBust::Worker::do_flush(
     kt::ThreadedServer* serv, kt::ThreadedServer::Session* sess,
     const std::vector<std::string>& tokens, kt::TimedDB* db)
 {
+  uint32_t tid = sess->thread_id();
+  _opcounts[tid][FLUSH]++;
   db->clear();
   sess->printf("OK\r\n");
   return true;
