@@ -159,17 +159,17 @@ bool CacheOrBust::Worker::do_get(
     const char flags = data[0];
     if (flags & FLAG_PENDING) {
       _opcounts[tid][MISS]++;
-      sess->printf("VALUE %s 0 0\r\n\r\nEND\r\n", url.c_str());
+      sess->printf("VALUE %s 0 0\r\n\r\nEND\r\n", key.c_str());
     } else {
       _opcounts[tid][HIT]++;
-      sess->printf("VALUE %s 0 %llu\r\n", url.c_str(), datasize - 1);
+      sess->printf("VALUE %s 0 %llu\r\n", key.c_str(), datasize - 1);
       sess->printf(data + 1);
       sess->printf("\r\nEND\r\n");
     }
     delete[] data;
   } else {
     _opcounts[tid][MISS]++;
-    sess->printf("VALUE %s 0 0\r\n\r\nEND\r\n", url.c_str());
+    sess->printf("VALUE %s 0 0\r\n\r\nEND\r\n", key.c_str());
 
     // add sentinel record, TTL 30s so that another
     // cache miss in 30s will cause another background
