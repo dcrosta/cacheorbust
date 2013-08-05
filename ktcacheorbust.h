@@ -1,8 +1,6 @@
 #ifndef KTCACHEORBUST_H
 #define KTCACHEORBUST_H
 
-#define CACHE_OR_BUST_VERSION "0.1.0"
-
 #include <ktplugserv.h>
 #include "fetch.h"
 

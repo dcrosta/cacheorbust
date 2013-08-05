@@ -208,7 +208,7 @@ bool CacheOrBust::Worker::do_stats(
   kc::strprintf(&result, "STAT pid %lld\r\n", (long long)kc::getpid());
   kc::strprintf(&result, "STAT uptime %lld\r\n", (long long)(now - _serv->_stime));
   kc::strprintf(&result, "STAT time %lld\r\n", (long long)now);
-  kc::strprintf(&result, "STAT version CacheOrBust/%s,KyotoTycoon/%s\r\n", CACHE_OR_BUST_VERSION, kt::VERSION);
+  kc::strprintf(&result, "STAT version CacheOrBust/%s,KyotoTycoon/%s\r\n", PACKAGE_VERSION, kt::VERSION);
   kc::strprintf(&result, "STAT pointer_size %d\r\n", (int)(sizeof(void*) * 8));
   kc::strprintf(&result, "STAT curr_connections %d\r\n", (int)serv->connection_count());
   kc::strprintf(&result, "STAT threads %d\r\n", (int)_nthreads);
