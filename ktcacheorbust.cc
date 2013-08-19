@@ -51,9 +51,9 @@ void CacheOrBust::configure(kt::TimedDB* dbary, size_t dbnum,
       } else if (!std::strcmp(key, "ttl")) {
         _ttl = kc::atoi(value);
       } else if (!std::strcmp(key, "keepalive")) {
-        if (std::strcmp(value, "true")) {
+        if (!std::strcmp(value, "true")) {
           _use_keepalive = true;
-        } else if (std::strcmp(value, "false")) {
+        } else if (!std::strcmp(value, "false")) {
           _use_keepalive = false;
         } else {
           _serv.log(kt::ThreadedServer::Logger::ERROR, "keepalive value must be 'true' or 'false' (assuming 'true')");
