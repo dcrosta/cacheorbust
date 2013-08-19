@@ -40,6 +40,7 @@ namespace cob {
       uint32_t _server_threads;
       uint32_t _fetcher_threads;
       uint32_t _ttl;
+      bool _use_keepalive;
 
       OpCounts _opcounts;
 
@@ -54,6 +55,7 @@ namespace cob {
           _server_threads(0),
           _fetcher_threads(0),
           _ttl(0),
+          _use_keepalive(true),
           _serv(),
           _opcounts()
       {

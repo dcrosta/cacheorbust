@@ -22,18 +22,20 @@ namespace cob {
       kt::TimedDB* _db;
 
       // owned
+      bool _use_keepalive;
       std::multimap<std::string, entry> _clients;
       kc::Mutex _lock;
 
       size_t _nthreads;
 
     public:
-      FetchQueue(CacheOrBust* serv, kt::TimedDB* db, size_t nthreads) :
+      FetchQueue(CacheOrBust* serv, kt::TimedDB* db, size_t nthreads, bool use_keepalive) :
         _serv(serv),
         _db(db),
         _nthreads(nthreads),
         _clients(),
-        _lock()
+        _lock(),
+        _use_keepalive(use_keepalive)
       { }
 
       void start() { kc::TaskQueue::start(_nthreads); };

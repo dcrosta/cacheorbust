@@ -54,79 +54,86 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
 
 kt::HTTPClient* FetchQueue::get_client(kt::URL& url)
 {
-  kc::ScopedMutex lk(&_lock);
-
-  // try to find an unused client for the host/port
   std::stringstream keystream;
   keystream << url.host() << ":" << url.port();
   std::string key(keystream.str());
 
-  std::pair<clientiter, clientiter> iters(_clients.equal_range(key));
-  while (iters.first != iters.second) {
-    entry& elem(iters.first->second);
-    if (!elem.second) {
-      // found one
-      elem.second = true;
-      return elem.first;
-    }
-    ++iters.first;
-  }
+  if (_use_keepalive) {
+    // try to find an unused client for the host/port
+    kc::ScopedMutex lk(&_lock);
 
-  // if we are at the client pool capacity, find
-  // one unused to delete. since the pool size is
-  // double the number of threads, there should be
-  // unused clients that can be deleted.
-  while (_clients.size() >= _nthreads * 2) {
-    clientiter it(_clients.begin());
-    clientiter end(_clients.end());
-    while (it != end) {
-      entry& elem(it->second);
+    std::pair<clientiter, clientiter> iters(_clients.equal_range(key));
+    while (iters.first != iters.second) {
+      entry& elem(iters.first->second);
       if (!elem.second) {
-        elem.first->close();
-        delete elem.first;
-        _clients.erase(it);
+        // found one
+        elem.second = true;
+        return elem.first;
       }
-      ++it;
+      ++iters.first;
     }
+
+    // if we are at the client pool capacity, find
+    // one unused to delete. since the pool size is
+    // double the number of threads, there should be
+    // unused clients that can be deleted.
+    while (_clients.size() >= _nthreads * 2) {
+      clientiter it(_clients.begin());
+      clientiter end(_clients.end());
+      while (it != end) {
+        entry& elem(it->second);
+        if (!elem.second) {
+          elem.first->close();
+          delete elem.first;
+          _clients.erase(it);
+        }
+        ++it;
+      }
+    }
+    _assert_(_clients.size() < _nthreads * 2);
   }
-  _assert_(_clients.size() < _nthreads * 2);
 
   kt::HTTPClient* client = new kt::HTTPClient;
   client->open(url.host(), url.port(), 5);
 
-  entry val(client, true);
-  std::pair<std::string, entry> item(key, val);
-  _clients.insert(item);
+  if (_use_keepalive) {
+    kc::ScopedMutex lk(&_lock);
+    entry val(client, true);
+    std::pair<std::string, entry> item(key, val);
+    _clients.insert(item);
+  }
 
   return client;
 }
 
 void FetchQueue::return_client(kt::URL& url, kt::HTTPClient* client, bool keep)
 {
-  kc::ScopedMutex lk(&_lock);
-
   std::stringstream keystream;
   keystream << url.host() << ":" << url.port();
   std::string key(keystream.str());
 
-  // mark the client as no longer in use
-  std::pair<clientiter, clientiter> iters(_clients.equal_range(key));
-  while (iters.first != iters.second) {
-    entry& elem(iters.first->second);
-    if (elem.first == client) {
-      if (keep) {
-        elem.second = false;
-        return;
-      } else {
-        _clients.erase(iters.first);
-        return;
-      }
-    }
-    ++iters.first;
-  }
+  if (_use_keepalive) {
+    kc::ScopedMutex lk(&_lock);
 
-  // could not find client in the pool, clean up
-  client->close();
+    // mark the client as no longer in use
+    std::pair<clientiter, clientiter> iters(_clients.equal_range(key));
+    while (iters.first != iters.second) {
+      entry& elem(iters.first->second);
+      if (elem.first == client) {
+        if (keep) {
+          elem.second = false;
+          return;
+        } else {
+          _clients.erase(iters.first);
+          return;
+        }
+      }
+      ++iters.first;
+    }
+
+    // could not find client in the pool, clean up
+    client->close();
+  }
   delete client;
 }
 

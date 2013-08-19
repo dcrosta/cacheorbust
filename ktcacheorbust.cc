@@ -29,6 +29,7 @@ void CacheOrBust::configure(kt::TimedDB* dbary, size_t dbnum,
   _server_threads = DEFAULT_SERVER_THREADS;
   _fetcher_threads = DEFAULT_FETCHER_THREADS;
   _ttl = DEFAULT_TTL;
+  _use_keepalive = true;
 
   std::vector<std::string> elems;
   kc::strsplit(expr, '#', &elems);
@@ -49,6 +50,14 @@ void CacheOrBust::configure(kt::TimedDB* dbary, size_t dbnum,
         _fetcher_threads = kc::atoi(value);
       } else if (!std::strcmp(key, "ttl")) {
         _ttl = kc::atoi(value);
+      } else if (!std::strcmp(key, "keepalive")) {
+        if (std::strcmp(value, "true")) {
+          _use_keepalive = true;
+        } else if (std::strcmp(value, "false")) {
+          _use_keepalive = false;
+        } else {
+          _serv.log(kt::ThreadedServer::Logger::ERROR, "keepalive value must be 'true' or 'false' (assuming 'true')");
+        }
       } else {
         std::stringstream err;
         err << "CacheOrBust: unknown option '" << key << "'";
@@ -71,7 +80,7 @@ bool CacheOrBust::start()
   }
 
   srand((unsigned long)(kc::time() * 1000));
-  _queue = new FetchQueue(this, _db, _fetcher_threads);
+  _queue = new FetchQueue(this, _db, _fetcher_threads, _use_keepalive);
   _queue->start();
 
   std::string listen;
