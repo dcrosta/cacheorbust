@@ -12,26 +12,26 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
 
   kt::URL url(task->_url);
   if (url.host().empty() || 0 == url.port()) {
-    std::stringstream msg;
-    msg << "illegal URL '" << task->_url << "'";
-    _serv->log(kt::ThreadedServer::Logger::INFO, msg.str());
+    std::string msg;
+    kc::strprintf(&msg, "illegal URL '%s'", task->_url.c_str());
+    _serv->log(kt::ThreadedServer::Logger::INFO, msg);
     _db->remove(key);
     _serv->count_op(FETCH_FAIL);
     delete task;
     return;
   }
 
-  std::stringstream msg;
-  msg << "fetching '" << task->_url << "'";
-  _serv->log(kt::ThreadedServer::Logger::DEBUG, msg.str());
+  std::string msg;
+  kc::strprintf(&msg, "fetching '%s'", task->_url.c_str());
+  _serv->log(kt::ThreadedServer::Logger::DEBUG, msg);
 
   std::string response;
   kt::HTTPClient* client(get_client(url));
   client->open(url.host(), url.port(), 5);
   if (-1 == client->fetch(url.path_query(), kt::HTTPClient::MGET, &response)) {
-    std::stringstream msg;
-    msg << "failed to fetch URL '" << task->_url << "': " << response;
-    _serv->log(kt::ThreadedServer::Logger::ERROR, msg.str());
+    std::string msg;
+    kc::strprintf(&msg, "failed to fetch URL '%s': %s", task->_url.c_str(), response.c_str());
+    _serv->log(kt::ThreadedServer::Logger::ERROR, msg);
     _db->remove(key);
     return_client(url, client, false);
     _serv->count_op(FETCH_FAIL);

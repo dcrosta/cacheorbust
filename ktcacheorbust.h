@@ -26,6 +26,8 @@ namespace cob {
 
       // borrowed
       kt::TimedDB* _db;
+      kt::ThreadedServer::Logger* _logger;
+      uint32_t _logkinds;
 
       // owned
       kt::ThreadedServer _serv;
@@ -48,6 +50,8 @@ namespace cob {
       explicit CacheOrBust() :
           _stime(kc::time()),
           _db(NULL),
+          _logger(NULL),
+          _logkinds(0),
           _worker(NULL),
           _queue(NULL),
           _host(""),
@@ -74,13 +78,19 @@ namespace cob {
 
       void log(kt::ThreadedServer::Logger::Kind kind, const char* format, ...)
       {
+        if (!_logger || !(kind & _logkinds)) return;
+        std::string msg;
         va_list ap;
-        _serv.log(kind, format, ap);
+        va_start(ap, format);
+        kc::vstrprintf(&msg, format, ap);
+        va_end(ap);
+        _logger->log(kind, msg.c_str());
       }
 
-      void log(kt::ThreadedServer::Logger::Kind kind, std::string message)
+      void log(kt::ThreadedServer::Logger::Kind kind, std::string& message)
       {
-        _serv.log(kind, message.c_str());
+        if (!_logger || !(kind & _logkinds)) return;
+        _logger->log(kind, message.c_str());
       }
 
       void count_op(Op op);

@@ -21,8 +21,10 @@ void CacheOrBust::configure(kt::TimedDB* dbary, size_t dbnum,
   // use the 0th database
   _db = dbary;
 
+  _logger = logger;
+  _logkinds = logkinds;
   _serv.set_logger(logger, logkinds);
-  _serv.log(kt::ThreadedServer::Logger::SYSTEM, "CacheOrBust starting up...");
+  log(kt::ThreadedServer::Logger::SYSTEM, "CacheOrBust starting up...");
 
   _host = DEFAULT_HOST;
   _port = DEFAULT_PORT;
@@ -56,12 +58,12 @@ void CacheOrBust::configure(kt::TimedDB* dbary, size_t dbnum,
         } else if (!std::strcmp(value, "false")) {
           _use_keepalive = false;
         } else {
-          _serv.log(kt::ThreadedServer::Logger::ERROR, "keepalive value must be 'true' or 'false' (assuming 'true')");
+          log(kt::ThreadedServer::Logger::ERROR, "keepalive value must be 'true' or 'false' (assuming 'true')");
         }
       } else {
         std::stringstream err;
         err << "CacheOrBust: unknown option '" << key << "'";
-        _serv.log(kt::ThreadedServer::Logger::ERROR, err.str().c_str());
+        log(kt::ThreadedServer::Logger::ERROR, err.str().c_str());
       }
     }
     ++it;
@@ -74,7 +76,7 @@ bool CacheOrBust::start()
   if (!_host.empty()) {
     addr = kt::Socket::get_host_address(_host);
     if (addr.empty()) {
-      _serv.log(kt::ThreadedServer::Logger::ERROR, "unknown host: %s", _host.c_str());
+      log(kt::ThreadedServer::Logger::ERROR, "unknown host: %s", _host.c_str());
       return false;
     }
   }
