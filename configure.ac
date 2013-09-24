@@ -1,4 +1,4 @@
-AC_INIT([cacheorbust], [0.3.1], [dcrosta@late.am])
+AC_INIT([cacheorbust], [0.3.2], [dcrosta@late.am])
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
