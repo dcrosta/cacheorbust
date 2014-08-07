@@ -15,24 +15,7 @@ configure your memcached client library with a larger maximum key length
 than normal, as some URLs can be quite long.
 
 
-# Install
-
-CacheOrBust uses autotools, which can be installed through your
-distribution's package manager, and depends on libraries and headers from
-Kyoto Cabinet and Kyoto Tycoon, which can be found at http://fallabs.com/.
-
-With dependencies installed, you can configure the build environment with:
-
-    $ autoreconf
-    $ ./configure
-
-And then build the CacheOrBust shared object library with:
-
-    $ make
-    $ [sudo] make install
-
-
-# Run
+# Running the Service
 
 CacheOrBust is built as a "pluggable server" for Kyoto Tycoon. The full path
 to ktcacheorbust.so should be given to the `-plsv` option to `ktserver`:
@@ -48,7 +31,56 @@ option to `ktserver`:
 * `fetcher_threads`: number of threads to handle background HTTP fetches [default: 16]
 * `ttl`: number of seconds for which cached results are served before re-fetching
   from the upstream server [default: 3600]
+* `keepalive`: if "true", background HTTP requests will use HTTP Keep-Alive
+   requests when requesting multiple URLs from the same host [default: false]
 
 A good starting point is:
 
     $ ktserver -plsv /usr/local/lib/ktcacheorbust-1.0.so -plex "port=1234#ttl=43200"
+
+
+# Using the Service
+
+CacheOrBust uses a variant and subset of the text-based memcached protocol.
+The memcached protocol was chosen for its low overhead and suitability for
+use in performance-sensitive applications (as opposed to HTTP). Most
+memcached client libraries can be used without modification with
+CacheOrBust.
+
+CacheOrBust supports `get`, `stats`, `flush_all` commands from the memcached
+protocol. The `stats` and `flush_all` commands are supported exactly as
+described in [the memcached protocol
+documentation](https://github.com/memcached/memcached/blob/master/doc/protocol.txt);
+`get` works differently by necessity. All other commands are not supported.
+
+The `get` command accepts 2 or 3 arguments:
+
+    get key url [ttl]
+
+The `key` is a unique key within the cache. If a value for the key already
+exists, then the cached contents of the `url` is immediately returned; if
+not, the `url` is fetched in the background, and CacheOrBust returns an
+empty response (no `VALUE` line in the memcached protocol) immediately.
+Subsequent requests for the `key` made after the `url` is fetched return the
+contents of the `url`.
+
+Cached contents are stored for `ttl` seconds. `ttl` defaults to the value
+specified at server startup, or 3,600 seconds (1 hour) if no default is
+specified.
+
+
+# Install
+
+CacheOrBust uses autotools, which can be installed through your
+distribution's package manager, and depends on libraries and headers from
+Kyoto Cabinet and Kyoto Tycoon, which can be found at http://fallabs.com/.
+
+With dependencies installed, you can configure the build environment with:
+
+    $ autoreconf
+    $ ./configure
+
+And then build the CacheOrBust shared object library with:
+
+    $ make
+    $ [sudo] make install
