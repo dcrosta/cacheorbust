@@ -44,9 +44,7 @@ A good starting point is:
 
 CacheOrBust uses a variant and subset of the text-based memcached protocol.
 The memcached protocol was chosen for its low overhead and suitability for
-use in performance-sensitive applications (as opposed to HTTP). Most
-memcached client libraries can be used without modification with
-CacheOrBust.
+use in performance-sensitive applications (as opposed to HTTP).
 
 CacheOrBust supports `get`, `stats`, `flush_all` commands from the memcached
 protocol. The `stats` and `flush_all` commands are supported exactly as
