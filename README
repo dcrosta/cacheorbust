@@ -9,10 +9,11 @@ Requests to CacheOrBust are made using a modified subset of the memcached
 protocol. Most memcached client libraries should work with CacheOrBust with
 little or no modification.
 
-To request a page from the cache, issue a memcached `get` command with the
-full URL of the page to be cached as the key. It may be necessary to
-configure your memcached client library with a larger maximum key length
-than normal, as some URLs can be quite long.
+To request a page from the cache, issue a memcached `get` command with two
+keys: a unique key to identify the page in the cache, and the full URL of the
+resource to be cached. It may be necessary to configure your memcached client
+library with a larger maximum key length than normal, as some URLs can be quite
+long.
 
 
 # Running the Service
