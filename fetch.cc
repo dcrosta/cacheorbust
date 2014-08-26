@@ -28,9 +28,10 @@ void FetchQueue::do_task(kc::TaskQueue::Task* t)
   std::string response;
   kt::HTTPClient* client(get_client(url));
   client->open(url.host(), url.port(), 5);
-  if (-1 == client->fetch(url.path_query(), kt::HTTPClient::MGET, &response)) {
+  int32_t status = client->fetch(url.path_query(), kt::HTTPClient::MGET, &response);
+  if (200 != status && 204 != status) {
     std::string msg;
-    kc::strprintf(&msg, "failed to fetch URL '%s': %s", task->_url.c_str(), response.c_str());
+    kc::strprintf(&msg, "failed to fetch URL '%s': status %d, %s", task->_url.c_str(), status, response.c_str());
     _serv->log(kt::ThreadedServer::Logger::ERROR, msg);
     _db->remove(key);
     return_client(url, client, false);
