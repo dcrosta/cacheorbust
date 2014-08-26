@@ -174,7 +174,7 @@ bool CacheOrBust::Worker::do_get(
     } else {
       _opcounts[tid][HIT]++;
       sess->printf("VALUE %s 0 %llu\r\n", key.c_str(), datasize - 1);
-      sess->printf(data + 1);
+      sess->send(data + 1, datasize - 1);
       sess->printf("\r\nEND\r\n");
     }
     delete[] data;
