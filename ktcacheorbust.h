@@ -119,7 +119,7 @@ namespace cob {
           };
 
           ~Worker() {
-            delete _opcounts;
+            delete[] _opcounts;
           };
 
           bool process(kt::ThreadedServer* serv, kt::ThreadedServer::Session* sess);
